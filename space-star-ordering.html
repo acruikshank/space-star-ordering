@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Space Star Ordering</title>
+  <style>
+    body {
+      margin: 0;
+      background:rgb(217, 217, 217);
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 1.2em;
+    }
+    #actions {
+      height: 5vh;
+      text-align: right;
+    }
+    #chat {
+      height: 70vh;
+      padding: 1em;
+      overflow: auto;
+    }
+    #chat div {
+      padding: .5em;
+    }
+    #prompt {
+      height: 20vh;
+      width: 100%;
+    }
+    .diciple {
+      color: rgb(202, 1, 152);
+    }
+    .oracle {
+      color: rgb(1, 120, 184);
+    }
+  </style>
+</head>
+<body>
+  <div id="actions">
+    token: <input type="text" id="token"/>
+    model: <input type="text" id="model"/>
+    <button id="reset">clear context</button>
+  </div>
+  <div id="chat"></div>
+  <textarea id="prompt"></textarea>
+</body>
+<script>
+const prompt = document.getElementById("prompt")
+const chat  = document.getElementById("chat")
+const reset  = document.getElementById("reset")
+const tokenInput  = document.getElementById("token")
+const modelInput  = document.getElementById("model")
+let context = "";
+let token = ''; //'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';
+let model = ''; //'curie:ft-acruikshank:tri-star-ordering-004-2023-02-03-18-06-12';
+
+const addText = (txt, type) => {
+  const block = document.createElement('div');
+  block.setAttribute('class', type);
+  block.innerText = txt;
+  chat.appendChild(block);
+}
+
+const validate = () => chat.disabled = !token || !model;
+
+const request = async (txt) => {
+  const prompt = `${context}Diciple: ${txt}\nOracle:`;
+  const response = await fetch("https://api.openai.com/v1/completions", {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    method: "POST",
+    body: JSON.stringify({ model, prompt, temperature: 0, max_tokens: 25 })
+  });
+  const payload = await response.json();
+
+  const reply = payload.choices[0].text.split("\n")[0];
+  addText(reply, 'oracle');
+  context = prompt + reply + '\n';
+};
+
+reset.addEventListener("click", () => {
+  context = "";
+  chat.innerHTML = '';
+});
+
+modelInput.addEventListener("change", () => {
+  model = modelInput.value;
+  validate();
+})
+
+tokenInput.addEventListener("change", () => {
+  token = tokenInput.value;
+  validate();
+})
+
+prompt.addEventListener("keydown", (e) => {
+  if (e.key !== "Enter") return false;
+  const newText = prompt.value.trim();
+  prompt.value = "";
+
+  addText(newText, 'diciple');
+  request(newText);
+});
+
+validate();
+</script>
+</html>
