@@ -62,7 +62,19 @@ const addText = (txt, type) => {
   chat.appendChild(block);
 }
 
-const validate = () => chat.disabled = !token || !model;
+if (!token && localStorage.token) {
+  tokenInput.value = token = localStorage.token;
+}
+
+if (!model && localStorage.model) {
+  modelInput.value = model = localStorage.model;
+}
+
+const validate = () => {
+  prompt.disabled = !token.length || !model.length;
+  if (token) localStorage.token = token;
+  if (model) localStorage.model = model;
+}
 
 const request = async (txt) => {
   const prompt = `${context}Diciple: ${txt}\nOracle:`;
